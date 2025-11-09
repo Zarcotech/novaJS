@@ -8,6 +8,7 @@ import si from 'systeminformation'
 import { execSync } from 'child_process'
 import { error } from 'console'
 import express from 'express';
+import { fileURLToPath } from 'url'
 
 function clearScreen() {
     process.stdout.write('\x1Bc')
@@ -42,6 +43,10 @@ async function nileEditor(filename) {
 async function terminal(PORT) {
 
     const app = express();
+
+    const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
+    app.use(express.static(path.join(__dirname, 'templates')));
     
     if (PORT == undefined) {
         console.log(chalk.red("novaJS: ERROR STARTING TERMINAL: NO PORT SPECIFIED"));
@@ -51,7 +56,7 @@ async function terminal(PORT) {
         })
 
         app.listen(PORT, () => {
-            console.log(`NovaJS terminal running on http://localhost:${PORT}/nova/terminal \n`);
+            console.log(`\n NovaJS terminal running on http://localhost:${PORT}/nova/terminal`);
         })
     }
 

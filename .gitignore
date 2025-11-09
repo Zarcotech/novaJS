@@ -1,1 +1,4 @@
 node_modules
+.local/state/replit/agent
+package-lock.json
+test.js
