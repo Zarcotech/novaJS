@@ -1,0 +1,7 @@
+build/
+dist/
+main.spec
+NitroGeneration.png
+pyproject.toml
+__pycache__/
+setup.py

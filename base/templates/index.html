@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nova Terminal</title>
+  </head>
+  <body>
+    <!-- quick container for a terminal using novaJS scripting, can be including using the <iframe> tag in your os index file as an app -->
+    <div class="container">
+      <div class="window-terminal" id="terminal-window">
+        <div class="window-header-terminal">
+          <div>Terminal</div>
+          <div class="window-controls-terminal">
+            <button class="maximize" style="color: #28c940">
+              <i class="fa-solid fa-expand"></i>
+            </button>
+            <button class="minimize" style="color: #fdb92e">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <button class="close" style="color: #fc5c52">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div class="terminal-content" id="terminal-content">
+          <div class="terminal-output" id="terminal-output">
+            <div class="terminal-line">NovaJS Terminal v1.0</div>
+            <div class="terminal-line">Type 'help' for available commands</div>
+          </div>
+          <div class="terminal-input-line">
+            <span class="terminal-prompt">user@<span id="path"></span>~$ </span>
+            <input
+              type="text"
+              id="terminal-input"
+              class="terminal-input"
+              autofocus
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const path = document.getElementById('path');
+
+      path.innerHTML = window.location.hostname;
+
+      console.log(window.location.hostname);
+    </script>
+  </body>
+</html>
