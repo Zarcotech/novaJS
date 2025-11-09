@@ -46,7 +46,38 @@ async function terminal(PORT) {
 
     const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-    app.use(express.static(path.join(__dirname, 'templates')));
+    const mimeTypes = {
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'text/javascript',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon'
+    };
+
+    app.use('/nova', express.static(path.join(__dirname, '../templates'), {
+        setHeaders: (res, filePath) => {
+            const ext = path.extname(filePath).toLowerCase();
+            if (mimeTypes[ext]) {
+                res.setHeader('Content-Type', mimeTypes[ext]);
+            }
+        }
+    }));
+
+    const staticDir = path.join(__dirname, '../static');
+    if (fs.existsSync(staticDir)) {
+        app.use('/nova', express.static(staticDir, {
+            setHeaders: (res, filePath) => {
+                const ext = path.extname(filePath).toLowerCase();
+                if (mimeTypes[ext]) {
+                    res.setHeader('Content-Type', mimeTypes[ext]);
+                }
+            }
+        }));
+    }
     
     if (PORT == undefined) {
         console.log(chalk.red("novaJS: ERROR STARTING TERMINAL: NO PORT SPECIFIED"));

@@ -1,30 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nova Terminal</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <!-- container for a terminal using novaJS scripting, can be including using the <iframe> tag in your os index file as an app -->
+        <!-- container for a terminal using novaJS scripting, can be including using the <iframe> tag in your os index file as an app -->
+git add .
+git oc
     <div class="container">
       <div class="window-terminal" id="terminal-window">
-        <div class="window-header-terminal">
-          <div>Terminal</div>
-          <div class="window-controls-terminal">
-            <button class="maximize" style="color: #28c940">
-              <i class="fa-solid fa-expand"></i>
-            </button>
-            <button class="minimize" style="color: #fdb92e">
-              <i class="fa-solid fa-minus"></i>
-            </button>
-            <button class="close" style="color: #fc5c52">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-        </div>
         <div class="terminal-content" id="terminal-content">
           <div class="terminal-output" id="terminal-output">
             <div class="terminal-line">NovaJS Terminal v1.0</div>
@@ -43,11 +31,38 @@
       </div>
     </div>
     <script>
-      const path = document.getElementById('path');
-
+      const path = document.getElementById("path");
       path.innerHTML = window.location.hostname;
-
       console.log(window.location.hostname);
+      const terminalWindow = document.getElementById("terminal-window");
+      const maximizeBtn = document.querySelector(
+        ".window-controls-terminal .maximize"
+      );
+      function updateMaxIcon(isFullscreen) {
+        if (!maximizeBtn) return;
+        maximizeBtn.innerHTML = isFullscreen
+          ? '<i class="fa-solid fa-compress"></i>'
+          : '<i class="fa-solid fa-expand"></i>';
+      }
+      if (maximizeBtn && terminalWindow) {
+        maximizeBtn.addEventListener("click", async () => {
+          try {
+            if (!document.fullscreenElement) {
+              await terminalWindow.requestFullscreen?.();
+              updateMaxIcon(true);
+            } else {
+              await document.exitFullscreen?.();
+              updateMaxIcon(false);
+            }
+          } catch (err) {
+            terminalWindow.classList.toggle("fullscreen");
+            updateMaxIcon(terminalWindow.classList.contains("fullscreen"));
+          }
+        });
+        document.addEventListener("fullscreenchange", () => {
+          updateMaxIcon(!!document.fullscreenElement);
+        });
+      }
     </script>
   </body>
 </html>
