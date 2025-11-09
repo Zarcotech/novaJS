@@ -7,6 +7,7 @@ import figlet from 'figlet'
 import si from 'systeminformation'
 import { execSync } from 'child_process'
 import { error } from 'console'
+import express from 'express';
 
 function clearScreen() {
     process.stdout.write('\x1Bc')
@@ -38,7 +39,24 @@ async function nileEditor(filename) {
     console.log(chalk.cyan(`File '${filename}' saved and closed.`))
 }
 
-async function terminal() {
+async function terminal(PORT) {
+
+    const app = express();
+    
+    if (PORT == undefined) {
+        console.log(chalk.red("novaJS: ERROR STARTING TERMINAL: NO PORT SPECIFIED"));
+    } else {
+        app.get('/nova/terminal', (req, res) => {
+            res.sendFile(path.join(__dirname, '../templates/index.html'));
+        })
+
+        app.listen(PORT, () => {
+            console.log(`NovaJS terminal running on http://localhost:${PORT}/nova/terminal \n`);
+        })
+    }
+
+    
+    
     const userName = 'user'
     const computerName = os.hostname()
     const customFig = figlet.textSync('Nova JS', { font: 'Slant' })
