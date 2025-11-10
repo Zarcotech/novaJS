@@ -31,26 +31,53 @@
     </div>
     <script>
       const terminalInput = document.getElementById("terminal-input");
-
-      fetch("/api/nova/input", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(terminalInput.value),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
+      const terminalOutput = document.getElementById("terminal-output");
+      terminalInput.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          const cmd = terminalInput.value.trim();
+          if (!cmd) return;
+          terminalInput.value = "";
+          const line = document.createElement("div");
+          line.className = "terminal-command";
+          line.textContent = `$ ${cmd}`;
+          terminalOutput.appendChild(line);
+          try {
+            const response = await fetch("/nova/command", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cmd })
+            });
+            const data = await response.json();
+            if (cmd === "ls" && data.meta && data.meta.files) {
+              data.meta.files.forEach((f) => {
+                const out = document.createElement("div");
+                out.className = f.type === "dir" ? "terminal-line terminal-dir" : "terminal-line terminal-file";
+                out.textContent = f.name;
+                terminalOutput.appendChild(out);
+              });
+            } else if (data.stdout) {
+              data.stdout.split("\n").forEach((l) => {
+                const out = document.createElement("div");
+                out.className = "terminal-line";
+                out.textContent = l;
+                terminalOutput.appendChild(out);
+              });
+            }
+            if (data.stderr) {
+              const err = document.createElement("div");
+              err.className = "terminal-error";
+              err.textContent = data.stderr;
+              terminalOutput.appendChild(err);
+            }
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+          } catch (error) {
+            const err = document.createElement("div");
+            err.className = "terminal-error";
+            err.textContent = error.toString();
+            terminalOutput.appendChild(err);
           }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Success:", data);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
+        }
+      });
 
       
 

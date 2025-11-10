@@ -5,3 +5,7 @@ test.js
 pnpm-lock.yaml
 .replit
 testing
+custom.ch
+.vscode
+.config
+custom.ch

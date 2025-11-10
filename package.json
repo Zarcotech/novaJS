@@ -7,5 +7,24 @@
     "readline": "^1.3.0",
     "readline-sync": "^1.4.10",
     "systeminformation": "^5.27.11"
-  }
+  },
+  "name": "@zarcotech/nova",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zarcotech/novaJS.git"
+  },
+  "keywords": [],
+  "author": "Zarcotech",
+  "license": "ADSL",
+  "bugs": {
+    "url": "https://github.com/Zarcotech/novaJS/issues"
+  },
+  "homepage": "https://github.com/Zarcotech/novaJS#readme"
 }

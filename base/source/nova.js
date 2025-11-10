@@ -18,29 +18,30 @@ async function nileEditor(filename) {
     console.log(chalk.cyan('--- Nile Editor ---'))
     console.log(chalk.yellow(`Editing file: ${filename}`))
     console.log(chalk.magenta("Type 'SAVE' on a new line to save and exit."))
-
     let content = []
     if (fs.existsSync(filename)) {
         content = fs.readFileSync(filename, 'utf-8').split('\n')
         console.log(chalk.green('File loaded. Current content:'))
         content.forEach((line, i) => console.log(`${String(i + 1).padStart(4)} | ${line}`))
     } else console.log(chalk.green('New file.'))
-
     console.log('-'.repeat(20))
     console.log("Start typing below (type 'SAVE' on its own line to finish):")
-
-    const rl = readline.createInterface({ input: process.stdin, output: undefined })
+    const rl = readline.createInterface({ input: process.stdin, output: { write: () => {} } })
     let newContent = []
     for await (const line of rl) {
-        if (line === 'SAVE') break
+        console.log(line)
+        const trimmed = line.trim().toUpperCase()
+        if (trimmed === 'SAVE') {
+            break
+        }
         newContent.push(line)
     }
     rl.close()
-    fs.appendFileSync(filename, newContent.join('\n') + '\n')
+    fs.writeFileSync(filename, newContent.join('\n'))
     console.log(chalk.cyan(`File '${filename}' saved and closed.`))
 }
 
-async function terminal(PORT) {
+async function terminal(PORT = 3000) {
 
     const app = express();
 
@@ -99,74 +100,54 @@ async function terminal(PORT) {
     const computerName = os.hostname()
     const customFig = figlet.textSync('Nova JS', { font: 'Slant' })
     const customCommands = {}
-
-    let input = '';
-
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: '' })
-    async function prompt() {
-        const dir = process.cwd()
-        rl.question(chalk.green(userName) + '@' + chalk.blue(computerName) + ':~' + chalk.white(dir) + ' $ ', async (input) => {
-            const inputSplit = input.trim().split(' ')
-
-            app.get('/api/nova/input', (req, res) => {
-                req.on('data', (chunk) => {
-                    input += chunk.toString();
-                })
-            })
-
-            
-
-            
-            if (!inputSplit[0]) return prompt()
-            const intake = inputSplit[0]
-
-            const ls = () => fs.readdirSync('.').forEach(f => console.log(fs.lstatSync(f).isDirectory() ? chalk.red(f) : chalk.blue(f)))
-            const pwd = () => console.log(process.cwd())
-            const cd = () => inputSplit[1] ? process.chdir(inputSplit[1]) : console.log('Usage: cd <directory>')
-            const touch = () => inputSplit[1] ? fs.writeFileSync(inputSplit[1], '') : console.log('Usage: touch <filename>')
-            const mkdir = () => inputSplit[1] ? fs.mkdirSync(inputSplit[1]) : console.log('Usage: mkdir <dirname>')
-            const rm = () => inputSplit[1] ? fs.existsSync(inputSplit[1]) ? fs.unlinkSync(inputSplit[1]) : console.log(`Error: file '${inputSplit[1]}' not found`) : console.log('Usage: rm <filename>')
-            const echo = () => inputSplit[1] ? console.log(inputSplit.slice(1).join(' ')) : console.log('Usage: echo <text>')
-            const rmdir = () => inputSplit[1] ? fs.existsSync(inputSplit[1]) && fs.lstatSync(inputSplit[1]).isDirectory() ? fs.rmdirSync(inputSplit[1]) : console.log(`Error: directory '${inputSplit[1]}' not found or not a directory`) : console.log('Usage: rmdir <dirname>')
-            const cat = () => inputSplit[1] ? console.log(fs.readFileSync(inputSplit[1], 'utf-8')) : console.log('Usage: cat <filename>')
-            const nile = async () => inputSplit[1] ? await nileEditor(inputSplit[1]) : console.log('Usage: nile <filename>')
-            const custom = () => {
-                if (inputSplit[1]) {
-                    const customCommandFile = inputSplit[1]
-                    const name = 'custom_' + path.basename(customCommandFile)
-                    const cmd = fs.readFileSync(customCommandFile, 'utf-8')
-                    customCommands[name] = cmd
-                    console.log(`Custom command '${name}' saved for this session.`)
-                } else console.log('Usage: custom <filename>')
-            }
-            const xclear = () => inputSplit[1] ? fs.writeFileSync(inputSplit[1], '') : null
-            const fetchdev = async () => {
-                const cpu = await si.cpu()
-                const mem = await si.mem()
-                console.log(chalk.blue('Fetching Device Info...'))
-                console.log(customFig)
-                console.log(`CPU: ${cpu.brand}\nOS: ${os.type()}\nRAM: ${Math.round(mem.total / (1024 ** 3))} GB\nArch: ${os.arch()}\nRelease: ${os.release()}\nPlatform: ${os.platform()}\nNode Version: ${process.version}`)
-            }
-
-            try {
-                if (intake === 'exit') { rl.close(); if (rl.close()) console.log('Exiting...'); if (error) {return} }
-                else if (intake === 'ls') ls()
-                else if (intake === 'pwd') pwd()
-                else if (intake === 'cd') cd()
-                else if (intake === 'touch') touch()
-                else if (intake === 'mkdir') mkdir()
-                else if (intake === 'rm') rm()
-                else if (intake === 'echo') echo()
-                else if (intake === 'rmdir') rmdir()
-                else if (intake === 'cat') cat()
-                else if (intake === 'clear' || intake === 'cls') clearScreen()
-                else if (intake === 'mint') console.log('Coming soon!')
-                else if (intake === 'nile') await nile()
-                else if (intake === 'custom') custom()
-                else if (intake === 'xclear') xclear()
-                else if (intake === 'fetchdev') await fetchdev()
-                else if (intake === 'help') console.log(`List of Commands:
-help - Displays this list
+    async function handleCommand(input) {
+        const inputSplit = input.trim().split(' ');
+        const intake = inputSplit[0];
+        let result = '';
+        let meta = undefined;
+        try {
+            if (intake === 'ls') {
+                const files = fs.readdirSync('.').map(f => ({
+                    name: f,
+                    type: fs.lstatSync(f).isDirectory() ? 'dir' : 'file'
+                }));
+                result = files.map(f => f.name).join('\n');
+                meta = { files };
+            } else if (intake === 'pwd') {
+                result = process.cwd();
+            } else if (intake === 'cd') {
+                if (!inputSplit[1]) result = 'Usage: cd <directory>';
+                else { process.chdir(inputSplit[1]); result = process.cwd(); }
+            } else if (intake === 'touch') {
+                if (!inputSplit[1]) result = 'Usage: touch <filename>';
+                else { fs.writeFileSync(inputSplit[1], ''); result = `Created file: ${inputSplit[1]}`; }
+            } else if (intake === 'mkdir') {
+                if (!inputSplit[1]) result = 'Usage: mkdir <dirname>';
+                else { fs.mkdirSync(inputSplit[1]); result = `Created directory: ${inputSplit[1]}`; }
+            } else if (intake === 'rm') {
+                if (!inputSplit[1]) result = 'Usage: rm <filename>';
+                else if (!fs.existsSync(inputSplit[1])) result = `Error: file '${inputSplit[1]}' not found`;
+                else { fs.unlinkSync(inputSplit[1]); result = `Removed file: ${inputSplit[1]}`; }
+            } else if (intake === 'rmdir') {
+                if (!inputSplit[1]) result = 'Usage: rmdir <dirname>';
+                else if (!fs.existsSync(inputSplit[1]) || !fs.lstatSync(inputSplit[1]).isDirectory()) result = `Error: directory '${inputSplit[1]}' not found or not a directory`;
+                else { fs.rmdirSync(inputSplit[1]); result = `Removed directory: ${inputSplit[1]}`; }
+            } else if (intake === 'cat') {
+                if (!inputSplit[1]) result = 'Usage: cat <filename>';
+                else result = fs.readFileSync(inputSplit[1], 'utf-8');
+            } else if (intake === 'echo') {
+                result = inputSplit.slice(1).join(' ') || 'Usage: echo <text>';
+            } else if (intake === 'clear' || intake === 'cls') {
+                result = '\x1Bc';
+            } else if (intake === 'nile') {
+                if (!inputSplit[1]) result = 'Usage: nile <filename>';
+                else { await nileEditor(inputSplit[1]); result = `Edited file: ${inputSplit[1]}`; }
+            } else if (intake === 'fetchdev') {
+                const cpu = await si.cpu();
+                const mem = await si.mem();
+                result = `CPU: ${cpu.brand}\nOS: ${os.type()}\nRAM: ${Math.round(mem.total / (1024 ** 3))} GB\nArch: ${os.arch()}\nRelease: ${os.release()}\nPlatform: ${os.platform()}\nNode Version: ${process.version}`;
+            } else if (intake === 'help') {
+                result = `help - Displays this list
 exit - Exits the terminal
 ls - Lists files
 pwd - Prints working directory
@@ -179,14 +160,37 @@ cat - Displays file content
 clear/cls - Clears screen
 nile - File editor (Usage: nile <filename>)
 fetchdev - Shows device info
-custom - Save command from file (Usage: custom <filename>)`)
-                else if (customCommands[intake]) execSync(customCommands[intake], { stdio: 'inherit' })
-                else console.log('Bash error: No Command Found')
-            } catch (err) { console.log('Bash error:', err.message) }
-            prompt()
-        })
+custom - Save command from file (Usage: custom <filename>)`;
+            } else if (intake === 'exit') {
+                result = 'Exiting...';
+            } else {
+                result = 'Command not found. Type "help" to see available commands.';
+            }
+        } catch (err) {
+            result = 'Error: ' + err.message;
+        }
+        return { result, meta };
     }
-    
+
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: '' });
+    async function prompt() {
+        const dir = process.cwd();
+        rl.question(chalk.green(userName) + '@' + chalk.blue(computerName) + ':~' + chalk.white(dir) + ' $ ', async (input) => {
+            const { result } = await handleCommand(input);
+            if (result === '\x1Bc') clearScreen();
+            else if (result === 'Exiting...') { rl.close(); console.log('Exiting...'); return; }
+            else console.log(result);
+            prompt();
+        });
+    }
+
+    app.use(express.json());
+    app.post('/nova/command', async (req, res) => {
+        const { cmd } = req.body || {};
+        if (!cmd || typeof cmd !== 'string') return res.status(400).json({ error: 'missing command' });
+        const { result, meta } = await handleCommand(cmd);
+        res.json({ stdout: result, meta });
+    });
 }
 
 export default terminal;
