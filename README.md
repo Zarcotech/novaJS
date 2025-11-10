@@ -1,4 +1,4 @@
-![novaJS](nova.png "NovaJS")
+![novaJS](icon.png "NovaJS")
 
 **Fast, robust, secure, and simple way to integrate your webOS apps, or teach Linux development**
 
