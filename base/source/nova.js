@@ -81,6 +81,7 @@ async function terminal(PORT) {
     
     if (PORT == undefined) {
         console.log(chalk.red("novaJS: ERROR STARTING TERMINAL: NO PORT SPECIFIED"));
+    
     } else {
         app.get('/nova/terminal', (req, res) => {
             res.sendFile(path.join(__dirname, '../templates/index.html'));
@@ -88,6 +89,7 @@ async function terminal(PORT) {
 
         app.listen(PORT, () => {
             console.log(`\n NovaJS terminal running on http://localhost:${PORT}/nova/terminal`);
+            prompt();
         })
     }
 
@@ -98,11 +100,23 @@ async function terminal(PORT) {
     const customFig = figlet.textSync('Nova JS', { font: 'Slant' })
     const customCommands = {}
 
+    let input = '';
+
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: '' })
     async function prompt() {
         const dir = process.cwd()
         rl.question(chalk.green(userName) + '@' + chalk.blue(computerName) + ':~' + chalk.white(dir) + ' $ ', async (input) => {
             const inputSplit = input.trim().split(' ')
+
+            app.get('/api/nova/input', (req, res) => {
+                req.on('data', (chunk) => {
+                    input += chunk.toString();
+                })
+            })
+
+            
+
+            
             if (!inputSplit[0]) return prompt()
             const intake = inputSplit[0]
 
@@ -172,7 +186,7 @@ custom - Save command from file (Usage: custom <filename>)`)
             prompt()
         })
     }
-    prompt()
+    
 }
 
 export default terminal;

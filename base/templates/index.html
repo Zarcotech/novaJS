@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,9 +8,8 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-        <!-- container for a terminal using novaJS scripting, can be including using the <iframe> tag in your os index file as an app -->
-git add .
-git oc
+    <!-- container for a terminal using novaJS scripting, can be including using the <iframe> tag in your os index file as an app -->
+
     <div class="container">
       <div class="window-terminal" id="terminal-window">
         <div class="terminal-content" id="terminal-content">
@@ -31,12 +30,36 @@ git oc
       </div>
     </div>
     <script>
+      const terminalInput = document.getElementById("terminal-input");
+
+      fetch("/api/nova/input", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(terminalInput.value),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Success:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+
+      
+
       const path = document.getElementById("path");
       path.innerHTML = window.location.hostname;
       console.log(window.location.hostname);
       const terminalWindow = document.getElementById("terminal-window");
       const maximizeBtn = document.querySelector(
-        ".window-controls-terminal .maximize"
+        ".window-controls-terminal .maximize",
       );
       function updateMaxIcon(isFullscreen) {
         if (!maximizeBtn) return;
